@@ -1,0 +1,33 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Databases & Vector Stores
+qdrant_data/
+mariadb_data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+ven/
+venv/
+*.venv
+ENV/
+env/
+
+# Logs & Caches
+logs/
+*.log
+.cache/
+.pytest_cache/
+
+# OS & Editor Files
+.DS_Store
+.vscode/
+.idea/

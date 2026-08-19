@@ -1,0 +1,92 @@
+{% if qi_error %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuickInsights</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #555; background: #fafafa;
+  }
+  .qi-msg { max-width: 32rem; text-align: center; padding: 2rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+  <div class="qi-msg">
+    QuickInsights isn't configured for this site yet.<br />
+    Ask a System Manager to fill in <b>QuickInsights Settings</b>
+    (FastAPI Base URL and signing secret).
+  </div>
+</body>
+</html>
+{% else %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickInsights</title>
+  <link rel="stylesheet" href="/assets/quickinsights/dist/quickinsights.css" />
+  <style>html, body, #root { height: 100%; margin: 0; padding: 0; overflow: hidden; }</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    (function () {
+      var identity = {{ qi_config }};
+      var cachedToken = identity.token;
+      var cachedExpiryMs = Date.now() + identity.expires_in * 1000;
+
+      // Plain fetch, not frappe.call -- this page deliberately loads none
+      // of Frappe's own JS libraries (that's the whole point: nothing here
+      // wraps the React app), and get_identity_token is a normal
+      // @frappe.whitelist() endpoint reachable via a same-origin cookie
+      // session. GET requests are exempt from Frappe's CSRF check (see
+      // frappe/auth.py's validate_csrf_token, which only guards
+      // POST/PUT/DELETE), so no CSRF token is needed here.
+      function fetchIdentity() {
+        return fetch("/api/method/quickinsights.api.get_identity_token", {
+          method: "GET",
+          credentials: "same-origin",
+        }).then(function (r) {
+          if (!r.ok) throw new Error("identity refresh failed: " + r.status);
+          return r.json();
+        }).then(function (r) {
+          return r.message;
+        });
+      }
+
+      // Refreshes automatically once within 60s of expiry, same policy as
+      // the widget bootstrap and the old Desk page controller used.
+      function getToken() {
+        if (cachedToken && Date.now() < cachedExpiryMs - 60000) {
+          return Promise.resolve(cachedToken);
+        }
+        return fetchIdentity().then(function (m) {
+          cachedToken = m.token;
+          cachedExpiryMs = Date.now() + m.expires_in * 1000;
+          return m.token;
+        });
+      }
+
+      // Exact shape frontend/src/lib/runtime-config.ts reads -- set BEFORE
+      // quickinsights.js's module graph evaluates (it reads this once, at
+      // import time), guaranteed here since that <script type="module">
+      // tag is only inserted below, after this one has already run.
+      // basePath is a plain website route now (not a Desk /app or /desk
+      // prefix) -- this page IS the app, at its own top-level URL.
+      window.__QUICKINSIGHTS_CONFIG__ = {
+        basePath: "/quickinsights",
+        fastApiBaseUrl: identity.fastapi_base_url,
+        getToken: getToken,
+      };
+    })();
+  </script>
+  <script type="module" src="/assets/quickinsights/dist/quickinsights.js"></script>
+</body>
+</html>
+{% endif %}

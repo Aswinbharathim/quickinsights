@@ -1,0 +1,30 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+python-multipart>=0.0.9          # required for FastAPI file uploads (UploadFile)
+
+# Real RAG stack (moved in from the ask-frappe.py proof of concept)
+pymysql>=1.1.0               # MariaDB / MySQL driver (pure Python, no system libs needed)
+qdrant-client>=1.9.0         # vector store client (Docker mode via docker-compose.yml)
+openai>=1.40.0               # OpenAI chat + embeddings (needed when EMBED_PROVIDER=openai or LLM_PROVIDER=openai)
+anthropic>=0.30.0            # Claude (only needed if LLM_PROVIDER=anthropic)
+sqlparse>=0.5.0              # used by the SELECT-only guardrail
+python-dotenv>=1.0.0         # loads settings from the .env file
+openpyxl>=3.1.0              # Excel import & export processing for descriptions and SQL examples
+
+# App metadata persistence (connections, reports, schedules, SQL examples, training
+# state) — a MariaDB database separate from any user database the app connects to.
+sqlalchemy>=2.0.30
+alembic>=1.13.0
+cryptography>=42.0.0          # encrypts saved DatabaseConnection passwords at rest
+
+# Frappe identity bridge — verifies signed identity tokens minted by the
+# QuickInsights Frappe app; entirely optional at runtime (see app/frappe_auth.py)
+pyjwt>=2.8.0,<3
+
+# Optional — only needed when EMBED_PROVIDER=sentence-transformers
+# sentence-transformers>=3.0.0
+# torch>=2.0.0
+
+# Dev/test only
+pytest>=8.0.0

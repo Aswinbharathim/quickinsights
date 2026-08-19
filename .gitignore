@@ -1,0 +1,85 @@
+# =========================================================
+# QuickInsights - Git Ignore
+# =========================================================
+
+# -------------------------
+# Environment / Secrets
+# -------------------------
+.env
+.env.*
+!.env.example
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+ven/
+env/
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# -------------------------
+# Logs
+# -------------------------
+logs/
+*.log
+backend/logs/
+
+# -------------------------
+# Docker persistent data
+# -------------------------
+qdrant_data/
+mariadb_data/
+backend/qdrant_data/
+backend/mariadb_data/
+
+# -------------------------
+# Node / React
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+
+# -------------------------
+# IDE
+# -------------------------
+.vscode/
+.idea/
+
+# -------------------------
+# OS
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Temporary files
+# -------------------------
+*.tmp
+*.temp
+tmp/
+temp/
+
+# -------------------------
+# Local runtime files
+# -------------------------
+*.pid
+# Keep the production React build bundled with the Frappe app
+!quickinsights/quickinsights/public/dist/
+!quickinsights/quickinsights/public/dist/**

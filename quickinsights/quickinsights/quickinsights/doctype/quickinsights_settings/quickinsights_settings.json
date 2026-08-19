@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "creation": "2026-08-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "fastapi_section",
+  "fastapi_base_url",
+  "fastapi_timeout_seconds",
+  "column_break_identity",
+  "signing_secret",
+  "token_ttl_minutes",
+  "widget_section",
+  "widget_enabled",
+  "help_html"
+ ],
+ "fields": [
+  {
+   "fieldname": "fastapi_section",
+   "fieldtype": "Section Break",
+   "label": "FastAPI Backend"
+  },
+  {
+   "description": "Base URL of this site's QuickInsights FastAPI deployment, e.g. https://quickinsights.example.com. Each Frappe site should point at its own dedicated backend -- see the integration architecture doc's multi-site isolation section.",
+   "fieldname": "fastapi_base_url",
+   "fieldtype": "Data",
+   "label": "FastAPI Base URL",
+   "reqd": 1
+  },
+  {
+   "default": "15",
+   "fieldname": "fastapi_timeout_seconds",
+   "fieldtype": "Int",
+   "label": "FastAPI Request Timeout (seconds)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Shared secret used to sign the identity tokens this site issues to FastAPI. Never exposed to the browser or to any API response -- only read server-side when minting a token. Generate a new one instead of typing a memorable value.",
+   "fieldname": "signing_secret",
+   "fieldtype": "Password",
+   "label": "Identity Token Signing Secret",
+   "reqd": 1
+  },
+  {
+   "default": "15",
+   "description": "How long a minted identity token stays valid before the React app / widget must silently mint a new one.",
+   "fieldname": "token_ttl_minutes",
+   "fieldtype": "Int",
+   "label": "Token Lifetime (minutes)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "widget_section",
+   "fieldtype": "Section Break",
+   "label": "Floating Chat Widget"
+  },
+  {
+   "default": "1",
+   "description": "When off, the widget bootstrap script never loads on any Desk page for anyone on this site -- independent of whether any individual user has a usable connection.",
+   "fieldname": "widget_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Floating Chat Widget"
+  },
+  {
+   "fieldname": "help_html",
+   "fieldtype": "HTML",
+   "options": "<div class=\"text-muted\">Changes here take effect immediately for new identity tokens; existing tokens already issued remain valid until they expire.</div>"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-18 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "QuickInsights",
+ "name": "QuickInsights Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
