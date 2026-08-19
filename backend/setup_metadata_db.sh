@@ -60,6 +60,76 @@ ensure_encryption_key() {
   fi
 }
 
+cleanup_conflicting_docker_services() {
+  local container_id container_name image ports
+
+  echo
+  echo "Checking for Docker port conflicts..."
+
+  # QuickInsights Docker MariaDB uses host port 3307.
+  while read -r container_id; do
+    [ -z "$container_id" ] && continue
+
+    container_name=$(docker inspect --format '{{.Name}}' "$container_id" | sed 's#^/##')
+    image=$(docker inspect --format '{{.Config.Image}}' "$container_id")
+
+    if [[ "$image" == mariadb* ]]; then
+      echo "  Found MariaDB container using port 3307:"
+      echo "    Container: $container_name"
+      echo "    Image:     $image"
+      echo "  Stopping and removing it..."
+
+      docker stop "$container_id" >/dev/null
+      docker rm "$container_id" >/dev/null
+
+      echo "  Removed conflicting MariaDB container: $container_name"
+    else
+      ports=$(docker inspect --format '{{json .HostConfig.PortBindings}}' "$container_id")
+      echo "ERROR: Port 3307 is occupied by a non-MariaDB Docker container."
+      echo "  Container: $container_name"
+      echo "  Image:     $image"
+      echo "  Ports:     $ports"
+      echo
+      echo "Please stop/remove that container manually before continuing."
+      exit 1
+    fi
+  done < <(docker ps -aq --filter "publish=3307")
+
+  # Qdrant uses host ports 6333 and 6334.
+  while read -r container_id; do
+    [ -z "$container_id" ] && continue
+
+    container_name=$(docker inspect --format '{{.Name}}' "$container_id" | sed 's#^/##')
+    image=$(docker inspect --format '{{.Config.Image}}' "$container_id")
+
+    if [[ "$image" == qdrant/* ]]; then
+      echo "  Found existing Qdrant container using QuickInsights ports:"
+      echo "    Container: $container_name"
+      echo "    Image:     $image"
+      echo "  Stopping and removing it..."
+
+      docker stop "$container_id" >/dev/null
+      docker rm "$container_id" >/dev/null
+
+      echo "  Removed conflicting Qdrant container: $container_name"
+    else
+      echo "ERROR: Qdrant port 6333/6334 is occupied by another Docker container."
+      echo "  Container: $container_name"
+      echo "  Image:     $image"
+      echo
+      echo "Please stop/remove that container manually before continuing."
+      exit 1
+    fi
+  done < <(
+    {
+      docker ps -aq --filter "publish=6333"
+      docker ps -aq --filter "publish=6334"
+    } | sort -u
+  )
+
+  echo "  Docker port check completed."
+}
+
 echo "QuickInsights metadata database setup"
 echo "======================================"
 echo "  1) Docker — run a bundled MariaDB 10.6 container (standalone setup) [default]"
@@ -69,6 +139,10 @@ MODE=${MODE:-1}
 
 case "$MODE" in
   1)
+    echo
+    echo "Preparing Docker services..."
+    cleanup_conflicting_docker_services
+
     echo
     echo "Starting Qdrant + MariaDB via Docker Compose..."
     docker compose -f "$COMPOSE_FILE" up -d qdrant
