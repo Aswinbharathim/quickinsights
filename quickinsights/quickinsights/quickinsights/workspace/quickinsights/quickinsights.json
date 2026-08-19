@@ -1,0 +1,31 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"qi-header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>QuickInsights</b></span>\",\"col\":12}},{\"id\":\"qi-para\",\"type\":\"paragraph\",\"data\":{\"text\":\"Chat with your data, generate reports, and manage scheduled reports.\",\"col\":12}},{\"id\":\"qi-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"QuickInsights\",\"col\":4}}]",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "chat",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "QuickInsights",
+ "links": [],
+ "module": "QuickInsights",
+ "name": "QuickInsights",
+ "number_cards": [],
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "type": "URL",
+   "url": "/quickinsights",
+   "label": "QuickInsights",
+   "doctype": "Workspace Shortcut"
+  }
+ ],
+ "title": "QuickInsights"
+}

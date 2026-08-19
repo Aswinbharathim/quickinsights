@@ -59,13 +59,14 @@ FastAPI backend communicates with:
 ## Requirements
 
 - Git
-- Python 3.12+
+- Python 3.10+ (for the QuickInsights FastAPI backend, `backend/.venv/`)
+- Python 3.14 (required by Frappe Framework v16 itself — check with `bench init --python python3.14` if your default `python3` is older)
 - Docker
 - Docker Compose
 - Frappe Framework v16
 - A working Frappe bench
 
-Note: The Frappe bench uses its own Python environment. The QuickInsights FastAPI backend uses a separate virtual environment (`backend/.venv/`). Do not mix them.
+Note: The Frappe bench uses its own Python environment (Python 3.14, per Frappe v16's own requirement). The QuickInsights FastAPI backend uses a separate virtual environment (`backend/.venv/`) and only needs Python 3.10+. Do not mix them.
 
 ## Setup
 
@@ -172,16 +173,28 @@ Keep this terminal running.
 In a separate terminal (your Frappe bench):
 
 ```bash
-cd ~/frappe-benchv
+cd ~/frappe-bench          # your Frappe bench directory
 bench start
 ```
 
 ## Install QuickInsights Frappe app
 
-From your Frappe bench directory:
+The Frappe app lives in the `quickinsights/` subdirectory of this repo, not
+at the repo root (the root also holds `backend/`, Docker/setup scripts,
+etc.). `bench get-app` requires its target to itself be a git repository, so
+after cloning, give that subdirectory its own local repo once before
+pointing bench at it:
 
 ```bash
-bench get-app https://github.com/Aswinbharathim/quickinsights.git
+cd quickinsights/quickinsights   # the nested Frappe app folder
+git init -q && git add -A && git commit -q -m "quickinsights app snapshot"
+cd ../..
+```
+
+Then, from your Frappe bench directory:
+
+```bash
+bench get-app --branch main /path/to/quickinsights/quickinsights
 bench --site <your-site-name> install-app quickinsights
 bench --site <your-site-name> migrate
 bench restart
@@ -213,7 +226,7 @@ cd quickinsights
 Terminal 2 — Frappe:
 
 ```bash
-cd ~/frappe-benchv
+cd ~/frappe-bench          # your Frappe bench directory
 bench start
 ```
 
@@ -255,7 +268,7 @@ cd quickinsights
 git pull
 
 # If app maintained via bench:
-cd ~/frappe-benchv
+cd ~/frappe-bench          # your Frappe bench directory
 bench update --app quickinsights
 bench --site <your-site-name> migrate
 bench restart
@@ -269,7 +282,3 @@ bench restart
 - Use HTTPS and configure CORS correctly
 - Back up the metadata DB and Qdrant data as needed
 - Keep API keys outside Git
-
----
-
-If you'd like, I can also add a short Quick Start section at the top, or convert this README to a slimmer `README-quickstart.md`.

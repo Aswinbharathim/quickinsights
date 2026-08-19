@@ -61,10 +61,29 @@ ensure_encryption_key() {
 }
 
 cleanup_conflicting_docker_services() {
-  local container_id container_name image ports
+  local container_id container_name image ports project service
+
+  # The Docker Compose project name this script's own `docker compose`
+  # invocations use (directory-name-derived, same rule Compose itself
+  # applies: lowercased, anything outside [a-z0-9_-] becomes '-').
+  local own_project
+  own_project=$(basename "$PROJECT_ROOT" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/-/g')
 
   echo
   echo "Checking for Docker port conflicts..."
+
+  # A container only gets auto-recreated if it is THIS project's own
+  # previous MariaDB/Qdrant container (same Compose project + service
+  # label) — e.g. left over from a prior run of this same script. Any
+  # other container on these ports (a different project, or something
+  # started with plain `docker run`) is reported, never touched: we
+  # can't tell if it holds data someone cares about.
+  is_own_container() {
+    local id="$1" expected_service="$2"
+    project=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$id" 2>/dev/null)
+    service=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.service"}}' "$id" 2>/dev/null)
+    [ "$project" = "$own_project" ] && [ "$service" = "$expected_service" ]
+  }
 
   # QuickInsights Docker MariaDB uses host port 3307.
   while read -r container_id; do
@@ -73,24 +92,26 @@ cleanup_conflicting_docker_services() {
     container_name=$(docker inspect --format '{{.Name}}' "$container_id" | sed 's#^/##')
     image=$(docker inspect --format '{{.Config.Image}}' "$container_id")
 
-    if [[ "$image" == mariadb* ]]; then
-      echo "  Found MariaDB container using port 3307:"
+    if is_own_container "$container_id" "mariadb"; then
+      echo "  Found this project's own MariaDB container on port 3307:"
       echo "    Container: $container_name"
       echo "    Image:     $image"
-      echo "  Stopping and removing it..."
+      echo "  Stopping and removing it (will be recreated from the same data volume)..."
 
       docker stop "$container_id" >/dev/null
       docker rm "$container_id" >/dev/null
 
-      echo "  Removed conflicting MariaDB container: $container_name"
+      echo "  Removed: $container_name"
     else
       ports=$(docker inspect --format '{{json .HostConfig.PortBindings}}' "$container_id")
-      echo "ERROR: Port 3307 is occupied by a non-MariaDB Docker container."
+      echo "ERROR: Port 3307 is already in use by a Docker container that does not"
+      echo "belong to this project — refusing to stop/remove it automatically."
       echo "  Container: $container_name"
       echo "  Image:     $image"
       echo "  Ports:     $ports"
       echo
-      echo "Please stop/remove that container manually before continuing."
+      echo "If this container is unrelated to QuickInsights, stop/remove it manually"
+      echo "or set METADATA_DB_PORT in backend/.env to a free port instead."
       exit 1
     fi
   done < <(docker ps -aq --filter "publish=3307")
@@ -102,22 +123,23 @@ cleanup_conflicting_docker_services() {
     container_name=$(docker inspect --format '{{.Name}}' "$container_id" | sed 's#^/##')
     image=$(docker inspect --format '{{.Config.Image}}' "$container_id")
 
-    if [[ "$image" == qdrant/* ]]; then
-      echo "  Found existing Qdrant container using QuickInsights ports:"
+    if is_own_container "$container_id" "qdrant"; then
+      echo "  Found this project's own Qdrant container on port 6333/6334:"
       echo "    Container: $container_name"
       echo "    Image:     $image"
-      echo "  Stopping and removing it..."
+      echo "  Stopping and removing it (will be recreated from the same data volume)..."
 
       docker stop "$container_id" >/dev/null
       docker rm "$container_id" >/dev/null
 
-      echo "  Removed conflicting Qdrant container: $container_name"
+      echo "  Removed: $container_name"
     else
-      echo "ERROR: Qdrant port 6333/6334 is occupied by another Docker container."
+      echo "ERROR: Qdrant port 6333/6334 is already in use by a Docker container that"
+      echo "does not belong to this project — refusing to stop/remove it automatically."
       echo "  Container: $container_name"
       echo "  Image:     $image"
       echo
-      echo "Please stop/remove that container manually before continuing."
+      echo "If this container is unrelated to QuickInsights, stop/remove it manually."
       exit 1
     fi
   done < <(
